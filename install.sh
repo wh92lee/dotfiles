@@ -3,6 +3,16 @@ set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+echo "=============================="
+echo "  dotfiles 설치 시작"
+echo "=============================="
+echo ""
+
+# git 사용자 정보 입력
+read -rp "Git 이름 (예: John Doe): " GIT_NAME
+read -rp "Git 이메일 (예: john@example.com): " GIT_EMAIL
+echo ""
+
 echo "==> [1/8] 시스템 패키지 설치"
 sudo apt-get update -y
 sudo apt-get install -y git curl build-essential
@@ -58,9 +68,16 @@ link() {
 
 link "$DOTFILES_DIR/home/.bashrc"   "$HOME/.bashrc"
 link "$DOTFILES_DIR/home/.profile"  "$HOME/.profile"
-link "$DOTFILES_DIR/home/.gitconfig" "$HOME/.gitconfig"
 link "$DOTFILES_DIR/home/.npmrc"    "$HOME/.npmrc"
 link "$DOTFILES_DIR/config/ssh/config" "$HOME/.ssh/config"
+
+# .gitconfig는 심링크 대신 사용자 정보를 반영하여 직접 생성
+cat > "$HOME/.gitconfig" <<EOF
+[user]
+	name = $GIT_NAME
+	email = $GIT_EMAIL
+EOF
+echo "    ~/.gitconfig (생성됨: $GIT_NAME <$GIT_EMAIL>)"
 
 echo "==> [7/8] Claude Code 설치"
 if ! command -v claude &>/dev/null; then
@@ -82,7 +99,7 @@ echo "  1) GitHub 인증:"
 echo "     gh auth login --web --git-protocol ssh"
 echo ""
 echo "  2) SSH 키 생성 (새 PC인 경우):"
-echo "     ssh-keygen -t ed25519 -C 'kkyok7713@naver.com'"
+echo "     ssh-keygen -t ed25519 -C '$GIT_EMAIL'"
 echo "     cat ~/.ssh/id_ed25519.pub  # GitHub에 등록"
 echo ""
 echo "  3) 셸 재시작 또는:"
